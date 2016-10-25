@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+##################################################################
+# Configuration Parameters
+##################################################################
+
+# Apache User
+STA_APACHE_USER=www-data
+
+# Apache Group
+STA_APACHE_GROUP=www-data
+
+# This will be the symlink we create on your Apache's htdocs dir. It will point to our "web" directory, which is the only one we need to expose through Apache.
+STA_APACHE_SYMLINK_TARGET=/var/www/html/sta

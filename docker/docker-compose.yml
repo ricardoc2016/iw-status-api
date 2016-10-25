@@ -1,0 +1,10 @@
+version: '2'
+services:
+    php:
+        image: php:7.0-apache
+        container_name: iw_status_api_php
+        volumes:
+            - "./../:/development"
+        ports:
+            - "37080:80"
+        entrypoint: /development/docker/custom/start.sh
