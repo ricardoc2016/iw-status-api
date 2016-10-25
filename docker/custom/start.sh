@@ -10,4 +10,4 @@ echo "Starting Apache...";
 
 service apache2 start;
 
-tail -F /development/var/logs/dev.log; /development/var/logs/prod.log;
+tail -F /development/var/logs/dev.log /development/var/logs/prod.log;

@@ -39,3 +39,7 @@ chown -R "${STA_APACHE_USER}:${STA_APACHE_GROUP}" "${STA_DIR}/var/cache" "${STA_
 echo "Publishing Assets...";
 
 "${STA_DIR}/bin/console" assets:install "${STA_DIR}/web" --symlink;
+
+echo "Executing final Installation tasks...";
+
+"${STA_DIR}/bin/console" sta:install;

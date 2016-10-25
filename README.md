@@ -2,16 +2,28 @@
 
 Status API project.
 
+## Requirements
+
+* PHP 7.0+
+* Apache 2.2+
+
 ## Development
 
-Install Docker + Docker Compose.
+Install Composer + Docker + Docker Compose.
 
+* Composer Installation Instructions: https://getcomposer.org/download
 * Docker Installation Instructions: https://docs.docker.com/engine/installation
 * Docker Compose Installation Instructions: https://docs.docker.com/compose/install
 
 Make sure to have both of them updated to the latest version.
 
-Clone our project and then, execute the following command:
+Clone our project and execute Composer install:
+
+```
+composer install;
+```
+
+Then, execute the following command:
 
 ```
 docker-compose -f docker/docker-compose.yml up;

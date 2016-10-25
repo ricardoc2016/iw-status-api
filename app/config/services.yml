@@ -4,6 +4,17 @@ parameters:
 #    parameter_name: value
 
 services:
-#    service_name:
-#        class: AppBundle\Directory\ClassName
-#        arguments: ["@another_service_name", "plain_value", "%parameter_name%"]
+    sta.service.status:
+        class: AppBundle\Service\StatusService
+        arguments: ["@database_connection", "@logger"]
+
+    sta.event_listener.kernel:
+        class:      AppBundle\EventListener\KernelEventListener
+        arguments: ["@logger", "%site_url%"]
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception,       method: onKernelException }
+            - { name: kernel.event_listener, event: kernel.request,         method: onKernelRequest }
+            - { name: kernel.event_listener, event: kernel.controller,      method: onKernelController }
+            - { name: kernel.event_listener, event: kernel.response,        method: onKernelResponse,       priority: 100 }
+            - { name: kernel.event_listener, event: kernel.finish_request,  method: onKernelFinishRequest }
+            - { name: kernel.event_listener, event: kernel.terminate,       method: onKernelTerminate }
