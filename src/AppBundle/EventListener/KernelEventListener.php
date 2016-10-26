@@ -11,6 +11,7 @@
 
 namespace AppBundle\EventListener;
 
+use AppBundle\Model\ErrorResponse;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -135,7 +136,7 @@ class KernelEventListener
 
         // Simple exception handling to transform the exception in a valid API response...
 
-        $response = new JsonResponse(
+        $errorResponse = new ErrorResponse(
             [
                 'code'              => $exception->getCode() ?
                     $exception->getCode() :
@@ -144,6 +145,8 @@ class KernelEventListener
                 'link'              => $this->_siteUrl.'/docs'
             ]
         );
+
+        $response = new JsonResponse($errorResponse->toArray());
 
         $event->setResponse($response);
     }

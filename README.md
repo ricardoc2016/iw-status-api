@@ -17,10 +17,10 @@ Install Composer + Docker + Docker Compose.
 
 Make sure to have both of them updated to the latest version.
 
-Clone our project and execute Composer install:
+Clone our project and execute Composer install (we use --ignore-platform-reqs so you can install even if you don't have PHP 7. Remember that we provide a Docker Compose to run this app)':
 
 ```
-composer install;
+composer install --ignore-platform-reqs;
 ```
 
 Then, execute the following command:

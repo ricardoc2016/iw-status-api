@@ -13,7 +13,6 @@ namespace AppBundle\Service;
 
 use Doctrine\DBAL\Connection;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 
 
 /**
@@ -78,10 +77,10 @@ class StatusService
         $qb = $this->createQueryBuilder();
 
         $qb->select(
-            'st.id',
-            'st.status',
-            'st.created_at',
-            'st.email'
+            'st.id AS "id"',
+            'st.status AS "status"',
+            'st.created_at AS "created_at"',
+            'st.email AS "email"'
         )
             ->from('sta_status', 'st');
 
