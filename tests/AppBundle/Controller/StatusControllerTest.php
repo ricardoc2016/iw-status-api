@@ -288,6 +288,7 @@ class StatusControllerTest extends WebTestCase
 
         $this->assertEquals($json['code'], $code);
         $this->assertEquals($json['message'], ErrorCodes::getMessage($code));
+        $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
     }
 
 
