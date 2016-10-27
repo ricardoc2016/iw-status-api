@@ -302,6 +302,10 @@ class StatusService
      */
     public function confirm(Status $status, string $code)
     {
+        if ($status->isAnonymous()) {
+            throw new ApiValidationException(ErrorCodes::ERR_CONFIRM_ANONYMOUS);
+        }
+
         $dateField = null;
         $codeField = null;
         $method = null;
@@ -336,7 +340,7 @@ class StatusService
                 $sql,
                 [
                     'id'            => $status->getId(),
-                    'currentDate'   => $status->$method()->format('Y-m-d H:i:s'),
+                    'currentDate'   => $status->getConfirmedAt()->format('Y-m-d H:i:s'),
                     'code'          => null
                 ]
             );

@@ -33,6 +33,7 @@ class ErrorCodes
     const ERR_POST_INVALID_STATUS           = 2003;
 
     const ERR_CONFIRM_CODE_NOT_FOUND        = 3000;
+    const ERR_CONFIRM_ANONYMOUS             = 3001;
 
     const ERR_DELETE_ANONYMOUS              = 4000;
 
@@ -57,6 +58,7 @@ class ErrorCodes
         self::ERR_POST_INVALID_STATUS           => 'Parameter "string" MUST be a string with a maximum of 120 characters.',
 
         self::ERR_CONFIRM_CODE_NOT_FOUND        => 'This status message does not have the confirmation code received.',
+        self::ERR_CONFIRM_ANONYMOUS             => 'Can\'t confirm anything with an anonymous status.',
 
         self::ERR_DELETE_ANONYMOUS              => 'Can\'t delete an anonymous status.',
 

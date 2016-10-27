@@ -78,6 +78,7 @@ CODE                       DESCRIPTION
 2003                       Parameter "string" MUST be a string with a maximum of 120 characters.
 
 3000                       This status message does not have the confirmation code received.
+3001                       Can't confirm anything with an anonymous status.
 
 4000                       Can't delete an anonymous status.
 

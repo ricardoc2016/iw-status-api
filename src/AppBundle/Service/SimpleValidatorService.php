@@ -1,21 +1,17 @@
 <?php
 /**
- * File SimpleValidatorService.php.
- *
- * PHP version 5.3+
+ * SimpleValidatorService.php file.
  *
  * @category   Frontend
- * @package    Intraway
- * @subpackage Intraway
- * @author     Gustavo Falco <gustavo.falco@intraway.com>
- * @copyright  2014 Intraway Corp.
- * @license    Intraway Corp. <http://www.intraway.com>
- * @link       http://www.intraway.com
+ * @package    STA
+ * @subpackage Service
+ * @author     Ricardo Canaletti <ricardo.canaletti@lacamaradelcrimen2016.com.sw>
+ * @license    MIT
  */
 
 namespace AppBundle\Service;
+
 use Symfony\Component\Validator\Constraints\Email;
-use Symfony\Component\Validator\Constraints\EmailValidator;
 use Symfony\Component\Validator\Validation;
 
 /**

@@ -1,111 +1,37 @@
 <?php
 
 /**
- * InstallCommand.php file.
+ * StatusControllerTest.php file.
  *
  * @category   Frontend
  * @package    STA
- * @subpackage Test/Controller
+ * @subpackage Tests/AppBundle/Functional/Controller
  * @author     Ricardo Canaletti <ricardo.canaletti@lacamaradelcrimen2016.com.sw>
  * @license    MIT
  */
 
 
-namespace Tests\AppBundle\Controller;
+namespace Tests\AppBundle\Functional\Controller;
 
 use AppBundle\Service\ErrorCodes;
 use AppBundle\Model\Status;
-use AppBundle\Service\StatusService;
-use Doctrine\DBAL\Connection;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\BrowserKit\Client;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\RouterInterface;
+use Tests\AppBundle\Functional\AbstractTestCase;
 
 /**
- * InstallCommand.php file.
+ * StatusControllerTest.php file.
  *
  * @category   Frontend
  * @package    STA
- * @subpackage Test/Controller
+ * @subpackage Tests/AppBundle/Functional/Controller
  * @author     Ricardo Canaletti <ricardo.canaletti@lacamaradelcrimen2016.com.sw>
  * @license    MIT
  */
 
-class StatusControllerTest extends WebTestCase
+class StatusControllerTest extends AbstractTestCase
 {
-    const TEST_STATUS_PREFIX = 'TEST!!!';
-
-
-    /**
-     * Field db.
-     *
-     * @var Connection
-     */
-    protected static $db;
-
-    /**
-     * Field container.
-     *
-     * @var ContainerInterface
-     */
-    protected static $container;
-
-
-    /**
-     * setUpBeforeClass method.
-     *
-     * @return void
-     */
-    public static function setUpBeforeClass()
-    {
-        parent::setUpBeforeClass();
-
-        self::bootKernel();
-
-        self::$container = self::$kernel->getContainer();
-        self::$db = self::$container->get('database_connection');
-    }
-
-    /**
-     * setUp method.
-     *
-     * @return void
-     */
-    public function setUp()
-    {
-        parent::setUp();
-
-        $this->cleanUp();
-    }
-
-    /**
-     * tearDown method.
-     *
-     * @return void
-     */
-    public function tearDown()
-    {
-        parent::tearDown();
-
-        $this->cleanUp();
-    }
-
-    /**
-     * cleanUp method.
-     *
-     * @return void
-     */
-    public function cleanUp()
-    {
-        $this->beginTransaction();
-
-        self::$db->executeUpdate('DELETE FROM sta_status');
-
-        $this->commit();
-    }
-
     public function testGet()
     {
         $client = static::createClient();
@@ -500,20 +426,6 @@ class StatusControllerTest extends WebTestCase
 
         $this->assertContains($link, $message->getBody());
 
-        // Confirm with an invalid code
-
-        $client->request('GET', '/status/'.$status->getId().'/confirmation/asdadas');
-
-        $response = $client->getResponse();
-
-        $this->assertEquals(400, $response->getStatusCode());
-
-        $json = json_decode($response->getContent(), true);
-
-        $this->assertEquals($json['code'], ErrorCodes::ERR_CONFIRM_CODE_NOT_FOUND);
-        $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_CONFIRM_CODE_NOT_FOUND));
-        $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
-
         // Confirm with valid code...
 
         $client->request('GET', '/status/'.$status->getId().'/confirmation/'.$status->getDeleteConfirmCode());
@@ -537,6 +449,90 @@ class StatusControllerTest extends WebTestCase
         $this->assertCount(1, $json);
 
         $this->assertEquals($status->getEmail(), $json['email']);
+    }
+
+    public function test_confirm()
+    {
+        $client = static::createClient();
+
+        // Confirm with an invalid code
+
+        $client->request('GET', '/status/123/confirmation/asdadas');
+
+        $response = $client->getResponse();
+
+        $this->assertEquals(404, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertCount(3, $json);
+
+        $this->assertEquals($json['code'], ErrorCodes::ERR_STATUS_NOT_FOUND);
+        $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_STATUS_NOT_FOUND));
+        $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
+
+        $this->beginTransaction();
+
+        $this->createStatus('a@a.com', 'My status', '2015-01-01 00:00:00')
+            ->createStatus('b@b.com', 'My other status', '2015-01-01 01:00:00')
+            ->createStatus(Status::ANONYMOUS_EMAIL, 'My oooother status', '2015-01-01 02:00:00');
+
+        $this->commit();
+
+        $statusService = $this->getStatusService();
+
+        $anonymStatus = $statusService->findOneBy(['status' => 'My oooother status']);
+
+        // Can't confirm anything with an anonymous status
+
+        $client->request('GET', '/status/'.$anonymStatus->getId().'/confirmation/asdadas');
+
+        $response = $client->getResponse();
+
+        $this->assertEquals(400, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertCount(3, $json);
+
+        $this->assertEquals($json['code'], ErrorCodes::ERR_CONFIRM_ANONYMOUS);
+        $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_CONFIRM_ANONYMOUS));
+        $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
+
+        $status = $statusService->findOneBy(['status' => 'My status']);
+
+        $client->request('GET', '/status/'.$status->getId().'/confirmation/asdadas');
+
+        $response = $client->getResponse();
+
+        $this->assertEquals(400, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertCount(3, $json);
+
+        $this->assertEquals($json['code'], ErrorCodes::ERR_CONFIRM_CODE_NOT_FOUND);
+        $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_CONFIRM_CODE_NOT_FOUND));
+        $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
+
+        // Confirm!
+
+        $client->request('GET', '/status/'.$status->getId().'/confirmation/'.$status->getConfirmCode());
+
+        $response = $client->getResponse();
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertCount(1, $json);
+
+        $this->assertEquals($json['email'], $status->getEmail());
+
+        $status = $statusService->findOneBy(['status' => 'My status']);
+
+        $this->assertNotNull($status->getConfirmedAt());
+        $this->assertNull($status->getConfirmCode());
     }
 
     /**
@@ -663,109 +659,5 @@ class StatusControllerTest extends WebTestCase
     protected function postStatus(Client $client, array $data)
     {
         $client->request('POST', '/status', [], [], ['Content-Type' => 'application/json'], json_encode($data));
-    }
-
-    /**
-     * Creates a status on the DB.
-     *
-     * @param string      $email     - Email.
-     * @param string      $status    - Status.
-     * @param null|string $createdAt - Created At.
-     *
-     * @throws \Doctrine\DBAL\DBALException
-     *
-     * @return self
-     */
-    protected function createStatus(string $email, string $status, string $createdAt) : self
-    {
-        self::$db->executeUpdate(
-            'INSERT INTO sta_status (
-                email,
-                status,
-                created_at,
-                confirm_code
-            ) VALUES (
-                :email,
-                :status,
-                :createdAt,
-                :confirmCode
-            )',
-            [
-                'email'             => $email,
-                'status'            => $status,
-                'createdAt'         => $createdAt,
-                'confirmCode'       => $email === Status::ANONYMOUS_EMAIL ?
-                    null :
-                    rand(100000, 999999)
-            ]
-        );
-
-        return $this;
-    }
-
-    /**
-     * beginTransaction.
-     *
-     * @return self
-     */
-    protected function beginTransaction() : self
-    {
-        if (!$this->isTransactionActive()) {
-            self::$db->beginTransaction();
-        }
-
-        return $this;
-    }
-
-    /**
-     * isTransactionActive.
-     *
-     * @return bool
-     */
-    protected function isTransactionActive() : bool
-    {
-        return self::$db->isTransactionActive();
-    }
-
-    /**
-     * commit.
-     *
-     * @throws \Doctrine\DBAL\ConnectionException
-     *
-     * @return self
-     */
-    protected function commit() : self
-    {
-        if ($this->isTransactionActive()) {
-            self::$db->commit();
-        }
-
-        return $this;
-    }
-
-    /**
-     * rollback.
-     *
-     * @throws \Doctrine\DBAL\ConnectionException
-     *
-     * @return self
-     */
-    protected function rollback() : self
-    {
-        if ($this->isTransactionActive()) {
-            self::$db->rollback();
-        }
-
-        return $this;
-    }
-
-    /**
-     * getStatusService.
-     *
-     * @return StatusService
-     */
-    protected function getStatusService() : StatusService
-    {
-        return self::$container->get('sta.service.status');
     }
 }

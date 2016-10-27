@@ -14,6 +14,12 @@ touch /tmp/php_errors.log
 
 chmod -R 777 /tmp/php_errors.log;
 
+echo "Installing and enabling xdebug"
+
+pecl install xdebug;
+
+docker-php-ext-enable xdebug;
+
 echo "Starting Apache...";
 
 service apache2 start;

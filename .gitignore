@@ -18,3 +18,4 @@
 /install_params.sh
 /resources/databases/db.sqlite*
 /web/docs
+/web/coverage
