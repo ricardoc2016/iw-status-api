@@ -24,4 +24,6 @@ echo "Starting Apache...";
 
 service apache2 start;
 
+cd /development;
+
 tail -F /development/var/logs/dev.log /development/var/logs/prod.log /tmp/php_errors.log;

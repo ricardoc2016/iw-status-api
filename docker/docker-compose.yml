@@ -8,3 +8,5 @@ services:
         ports:
             - "37080:80"
         entrypoint: /development/docker/custom/start.sh
+        env:
+            TERM: xterm

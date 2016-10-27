@@ -42,7 +42,7 @@ rm -rf "${STA_DIR}/var/cache/*";
 
 echo "Setting permissions on Cache, logs and sessions directories...";
 
-chown -R "${STA_APACHE_USER}:${STA_APACHE_GROUP}" "${STA_DIR}/var/cache" "${STA_DIR}/var/logs" "${STA_DIR}/var/sessions"
+chmod -R 777 "${STA_DIR}/var/cache" "${STA_DIR}/var/logs" "${STA_DIR}/var/sessions"
 
 echo "Publishing Assets...";
 
