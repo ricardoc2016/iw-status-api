@@ -12,6 +12,8 @@
 
 namespace AppBundle\Controller;
 
+use AppBundle\Exception\ApiException;
+use AppBundle\Service\ErrorCodes;
 use AppBundle\Service\StatusService;
 use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -58,6 +60,30 @@ class StatusController extends Controller
         );
 
         return new JsonResponse($statusCollection->toArray());
+    }
+
+    /**
+     * Get by ID action.
+     *
+     * @param Request $request - Request.
+     *
+     * @Route("/status/{id}", name="sta_get_by_id", methods={"GET"}, requirements={"id" = "\d+"})
+     *
+     * @throws ApiException
+     *
+     * @return JsonResponse
+     */
+    public function getByIdAction(Request $request, $id) : JsonResponse
+    {
+        $statusService = $this->getStatusService();
+
+        $status = $statusService->findOneBy(['id' => $id]);
+
+        if (!$status) {
+            throw new ApiException(ErrorCodes::ERR_GET_BY_ID_NOT_FOUND, Response::HTTP_NOT_FOUND);
+        }
+
+        return new JsonResponse($status->toArray(), Response::HTTP_OK);
     }
 
     /**

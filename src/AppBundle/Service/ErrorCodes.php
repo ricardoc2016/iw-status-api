@@ -32,6 +32,9 @@ class ErrorCodes
     const ERR_POST_MISSING_STATUS           = 2002;
     const ERR_POST_INVALID_STATUS           = 2003;
 
+    const ERR_GET_BY_ID_NOT_FOUND           = 3000;
+
+    const ERR_RESOURCE_NOT_FOUND            = 9998;
     const ERR_UNKNOWN                       = 9999;
 
 
@@ -50,6 +53,9 @@ class ErrorCodes
         self::ERR_POST_MISSING_STATUS   => 'Missing parameter "status".',
         self::ERR_POST_INVALID_STATUS   => 'Parameter "string" MUST be a string with a maximum of 120 characters.',
 
+        self::ERR_GET_BY_ID_NOT_FOUND   => 'Status message not found.',
+
+        self::ERR_RESOURCE_NOT_FOUND    => 'Resource not found.',
         self::ERR_UNKNOWN               => 'Unknown Error.'
     ];
 

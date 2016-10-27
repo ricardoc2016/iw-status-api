@@ -15,6 +15,7 @@ namespace Tests\AppBundle\Controller;
 
 use AppBundle\Service\ErrorCodes;
 use AppBundle\Model\Status;
+use AppBundle\Service\StatusService;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\BrowserKit\Client;
@@ -272,6 +273,62 @@ class StatusControllerTest extends WebTestCase
         $this->assertEquals('2015-01-01T01:00:00Z', $json[1]['created_at']);
     }
 
+    public function testGetById()
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/status/asd');
+        $response = $client->getResponse();
+
+        $this->assertEquals(404, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertCount(3, $json);
+
+        $this->assertEquals($json['code'], ErrorCodes::ERR_RESOURCE_NOT_FOUND);
+        $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_RESOURCE_NOT_FOUND));
+        $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
+
+        $client->request('GET', '/status/123131321211');
+        $response = $client->getResponse();
+
+        $this->assertEquals(404, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertCount(3, $json);
+
+        $this->assertEquals($json['code'], ErrorCodes::ERR_GET_BY_ID_NOT_FOUND);
+        $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_GET_BY_ID_NOT_FOUND));
+        $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
+
+        $this->beginTransaction();
+
+        $this->createStatus('a@a.com', 'My status', '2015-01-01 00:00:00')
+            ->createStatus('b@b.com', 'My other status', '2015-01-01 01:00:00')
+            ->createStatus('c@c.com', 'My oooother status', '2015-01-01 02:00:00');
+
+        $this->commit();
+
+        $statusService = $this->getStatusService();
+        $status = $statusService->findOneBy(['email' => 'a@a.com']);
+
+        $client->request('GET', '/status/'.$status->getId());
+        $response = $client->getResponse();
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertCount(4, $json);
+
+        $this->assertEquals($status->getId(), $json['id']);
+        $this->assertEquals($status->getEmail(), $json['email']);
+        $this->assertEquals($status->getStatus(), $json['status']);
+        $this->assertEquals($status->getCreatedAt()->format('Y-m-d\TH:i:s\Z'), $json['created_at']);
+    }
+
     public function testPost()
     {
         $client = static::createClient();
@@ -516,5 +573,15 @@ class StatusControllerTest extends WebTestCase
         }
 
         return $this;
+    }
+
+    /**
+     * getStatusService.
+     *
+     * @return StatusService
+     */
+    protected function getStatusService() : StatusService
+    {
+        return self::$container->get('sta.service.status');
     }
 }

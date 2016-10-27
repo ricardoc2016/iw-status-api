@@ -147,8 +147,8 @@ class StatusService
     {
         $res = $this->find($filters, ['limit' => 1]);
 
-        return $res ?
-            $res[0] :
+        return $res->count() ?
+            $res->getCollection()[0] :
             null;
     }
 

@@ -77,5 +77,8 @@ CODE                       DESCRIPTION
 2002                       Missing parameter "status".
 2003                       Parameter "string" MUST be a string with a maximum of 120 characters.
 
+3000                       Status message not found.
+
+9998                       Resource not found.
 9999                       Unknown Error.
 ========================== ============================================================================

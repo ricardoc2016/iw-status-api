@@ -24,6 +24,7 @@ use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
 use Symfony\Component\HttpKernel\Event\PostResponseEvent;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 
 /**
@@ -135,6 +136,11 @@ class KernelEventListener
     {
         $exception = $event->getException();
 
+        $this->_logger->error(
+            'Exception ('.get_class($exception).') - Code: '.$exception->getCode().' - Message: '.
+            $exception->getMessage().' - Stack Trace: '.$exception->getTraceAsString()
+        );
+
         // Simple exception handling to transform the exception in a valid API response...
 
         $errorResponse = new ErrorResponse(
@@ -149,9 +155,15 @@ class KernelEventListener
 
         $this->_logger->error('Returning Error Response', $errorResponse->toArray());
 
-        $httpStatus = $exception instanceof ApiException ?
-            $exception->getHttpStatusCode() :
-            Response::HTTP_INTERNAL_SERVER_ERROR;
+        if ($exception instanceof ApiException) {
+            $httpStatus = $exception->getHttpStatusCode();
+        } else if ($exception instanceof NotFoundHttpException) {
+            $httpStatus = 404;
+            $errorResponse->setCode(ErrorCodes::ERR_RESOURCE_NOT_FOUND)
+                ->setMessage(ErrorCodes::getMessage(ErrorCodes::ERR_RESOURCE_NOT_FOUND));
+        } else {
+            $httpStatus = Response::HTTP_INTERNAL_SERVER_ERROR;
+        }
 
         $response = new JsonResponse($errorResponse->toArray(), $httpStatus);
 

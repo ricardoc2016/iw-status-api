@@ -41,6 +41,16 @@ class StatusCollection extends AbstractModel
     }
 
     /**
+     * count.
+     *
+     * @return int
+     */
+    public function count() : int
+    {
+        return count($this->getCollection());
+    }
+
+    /**
      * Setter for field $collection.
      *
      * @param array $collection - collection.
