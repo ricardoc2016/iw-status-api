@@ -27,6 +27,11 @@ class ErrorCodes
     const ERR_INVALID_ROWS                  = 1001;
     const ERR_INVALID_QUERY                 = 1002;
 
+    const ERR_POST_MISSING_EMAIL            = 2000;
+    const ERR_POST_INVALID_EMAIL            = 2001;
+    const ERR_POST_MISSING_STATUS           = 2002;
+    const ERR_POST_INVALID_STATUS           = 2003;
+
     const ERR_UNKNOWN                       = 9999;
 
 
@@ -39,6 +44,11 @@ class ErrorCodes
         self::ERR_INVALID_PAGE          => 'Parameter "p" MUST be an integer >= 1',
         self::ERR_INVALID_ROWS          => 'Parameter "r" MUST be an integer >= 1',
         self::ERR_INVALID_QUERY         => 'Parameter "q" MUST be a string with a maximum of 120 characters.',
+
+        self::ERR_POST_MISSING_EMAIL    => 'Missing "email" parameter.',
+        self::ERR_POST_INVALID_EMAIL    => 'Parameter "email" MUST be a valid e-mail.',
+        self::ERR_POST_MISSING_STATUS   => 'Missing parameter "status".',
+        self::ERR_POST_INVALID_STATUS   => 'Parameter "string" MUST be a string with a maximum of 120 characters.',
 
         self::ERR_UNKNOWN               => 'Unknown Error.'
     ];

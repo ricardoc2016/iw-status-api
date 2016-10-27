@@ -14,6 +14,9 @@
  */
 
 namespace AppBundle\Service;
+use Symfony\Component\Validator\Constraints\Email;
+use Symfony\Component\Validator\Constraints\EmailValidator;
+use Symfony\Component\Validator\Validation;
 
 /**
  * SimpleValidatorService.php file.
@@ -76,5 +79,29 @@ class SimpleValidatorService
     public function isIntegerGreaterOrEqualThan($value, int $min) : bool
     {
         return $this->isInteger($value) && $value >= $min;
+    }
+
+    /**
+     * isValidEmail.
+     *
+     * @param mixed $value - Value.
+     *
+     * @return bool
+     */
+    public function isValidEmail($value) : bool
+    {
+        if (!$this->isString($value)) {
+            return false;
+        }
+
+        $validation = Validation::createValidator();
+        $violations = $validation->validate(
+            $value,
+            [
+                new Email()
+            ]
+        );
+
+        return count($violations) === 0;
     }
 }

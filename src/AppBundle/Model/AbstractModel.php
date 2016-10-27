@@ -111,7 +111,7 @@ abstract class AbstractModel
      *
      * @return \DateTime|null
      */
-    protected function createDateTimeInstance(
+    public function createDateTimeInstance(
         $date,
         string $format = 'Y-m-d H:i:s',
         string $timezone = 'UTC'
@@ -123,12 +123,18 @@ abstract class AbstractModel
         $timezone = new \DateTimeZone($timezone);
 
         if (is_string($date)) {
-            $date = \DateTime::createFromFormat($format, $date, $timezone);
+            if ($date === 'now') {
+                $date = new \DateTime('now');
+            } else {
+                $date = \DateTime::createFromFormat($format, $date, $timezone);
+            }
         } else if (is_object($date) && $date instanceof \DateTime) {
             /** @var \DateTime $date */
             $date->setTimezone($timezone);
         } else {
-            throw new \InvalidArgumentException('$date MUST be NULL, a date string or an instance of \DateTime.');
+            throw new \InvalidArgumentException(
+                '$date MUST be NULL, a date string or an instance of \DateTime. Received: '.var_export($date, true)
+            );
         }
 
         return $date;

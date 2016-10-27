@@ -72,5 +72,10 @@ CODE                       DESCRIPTION
 1001                       Parameter "r" MUST be an integer >= 1
 1002                       Parameter "q" MUST be a string with a maximum of 120 characters.
 
+2000                       Missing "email" parameter.
+2001                       Parameter "email" MUST be a valid e-mail.
+2002                       Missing parameter "status".
+2003                       Parameter "string" MUST be a string with a maximum of 120 characters.
+
 9999                       Unknown Error.
 ========================== ============================================================================

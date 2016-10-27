@@ -61,14 +61,20 @@ class Status extends AbstractModel
      */
     private $_confirmedAt;
 
+    /**
+     * Field _confirmCode
+     *
+     * @var string
+     */
+    private $_confirmCode;
 
 
     /**
      * Getter for field id.
      *
-     * @return int
+     * @return int|null
      */
-    public function getId() : int
+    public function getId()
     {
         return $this->_id;
     }
@@ -181,6 +187,40 @@ class Status extends AbstractModel
         $this->_confirmedAt = $this->createDateTimeInstance($confirmedAt);
 
         return $this;
+    }
+
+    /**
+     * Getter for field confirmCode.
+     *
+     * @return string|null
+     */
+    public function getConfirmCode()
+    {
+        return $this->_confirmCode;
+    }
+
+    /**
+     * Setter for field $confirmCode.
+     *
+     * @param string|null $confirmCode - confirmCode.
+     *
+     * @return self
+     */
+    public function setConfirmCode(string $confirmCode) : self
+    {
+        $this->_confirmCode = $confirmCode;
+
+        return $this;
+    }
+
+    /**
+     * isAnonymous.
+     *
+     * @return bool
+     */
+    public function isAnonymous()
+    {
+        return $this->getEmail() === self::ANONYMOUS_EMAIL;
     }
 
     /**

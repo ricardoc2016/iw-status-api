@@ -17,6 +17,7 @@ use AppBundle\Service\ErrorCodes;
 use AppBundle\Model\Status;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\BrowserKit\Client;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -271,6 +272,32 @@ class StatusControllerTest extends WebTestCase
         $this->assertEquals('2015-01-01T01:00:00Z', $json[1]['created_at']);
     }
 
+    public function testPost()
+    {
+        $client = static::createClient();
+
+        $data = [
+            'email'             => Status::ANONYMOUS_EMAIL,
+            'status'            => 'My Status!'
+        ];
+
+        $this->postStatus($client, $data);
+
+        $response = $client->getResponse();
+
+        $this->assertEquals(201, $response->getStatusCode());
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertCount(4, $json);
+        $this->assertInternalType('int', $json['id']);
+        $this->assertEquals($data['email'], $json['email']);
+        $this->assertEquals($data['status'], $json['status']);
+
+        $date = new \DateTime($json['created_at']);
+
+        $this->assertEquals($json['created_at'], $date->format('Y-m-d\TH:i:s\Z'));
+    }
+
     /**
      * @dataProvider getErrorsDataProvider
      */
@@ -278,6 +305,28 @@ class StatusControllerTest extends WebTestCase
     {
         $client = static::createClient();
         $client->request('GET', $url);
+        $response = $client->getResponse();
+
+        $this->assertEquals($statusCode, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertCount(3, $json);
+
+        $this->assertEquals($json['code'], $code);
+        $this->assertEquals($json['message'], ErrorCodes::getMessage($code));
+        $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
+    }
+
+    /**
+     * @dataProvider postErrorsDataProvider
+     */
+    public function test_postErrors(array $data, $code, $statusCode = Response::HTTP_BAD_REQUEST)
+    {
+        $client = static::createClient();
+
+        $this->postStatus($client, $data);
+
         $response = $client->getResponse();
 
         $this->assertEquals($statusCode, $response->getStatusCode());
@@ -325,7 +374,55 @@ class StatusControllerTest extends WebTestCase
         ];
     }
 
+    public function postErrorsDataProvider()
+    {
+        return [
+            [
+                [],
+                ErrorCodes::ERR_POST_MISSING_EMAIL
+            ],
+            [
+                [
+                    'email'     => 'asd'
+                ],
+                ErrorCodes::ERR_POST_INVALID_EMAIL
+            ],
+            [
+                [
+                    'email'     => 'asd@'
+                ],
+                ErrorCodes::ERR_POST_INVALID_EMAIL
+            ],
+            [
+                [
+                    'email'     => Status::ANONYMOUS_EMAIL,
+                    'status'    => null
+                ],
+                ErrorCodes::ERR_POST_MISSING_STATUS
+            ],
+            [
+                [
+                    'email'     => Status::ANONYMOUS_EMAIL,
+                    'status'    => ''
+                ],
+                ErrorCodes::ERR_POST_INVALID_STATUS
+            ],
+            [
+                [
+                    'email'     => 'a@a.com',
+                    'status'    => str_repeat('a', 121)
+                ],
+                ErrorCodes::ERR_POST_INVALID_STATUS
+            ],
+        ];
+    }
+
     // Helper Methods
+
+    protected function postStatus(Client $client, array $data)
+    {
+        $client->request('POST', '/status', [], [], ['Content-Type' => 'application/json'], json_encode($data));
+    }
 
     /**
      * Creates a status on the DB.

@@ -13,10 +13,12 @@
 namespace AppBundle\Controller;
 
 use AppBundle\Service\StatusService;
+use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * StatusController.php file.
@@ -70,21 +72,30 @@ class StatusController extends Controller
     public function postAction(Request $request) : JsonResponse
     {
         $statusService = $this->getStatusService();
+        $requestData = $this->getJsonRequest($request);
 
-        $statusCollection = $statusService->find(
+        $status = $statusService->create(
             [
-                'status'            => $request->query->get('q', null)
-            ],
-            [
-                'page'              => $request->query->get('p', 1),
-                'limit'             => $request->query->get('r', 20),
-                'orderBy'           => [
-                    ['created_at', 'DESC']
-                ]
+                'email'                 => isset($requestData['email']) ?
+                    $requestData['email'] :
+                    null,
+                'status'                => isset($requestData['status']) ?
+                    $requestData['status'] :
+                    null
             ]
         );
 
-        return new JsonResponse($statusCollection->toArray());
+        return new JsonResponse($status->toArray(), Response::HTTP_CREATED);
+    }
+
+    /**
+     * getLogger.
+     *
+     * @return LoggerInterface
+     */
+    protected function getLogger() : LoggerInterface
+    {
+        return $this->get('logger');
     }
 
     /**
@@ -95,5 +106,19 @@ class StatusController extends Controller
     protected function getStatusService() : StatusService
     {
         return $this->get('sta.service.status');
+    }
+
+    /**
+     * getJsonRequest.
+     *
+     * @param Request $request - Request.
+     *
+     * @return array|null
+     */
+    protected function getJsonRequest(Request $request)
+    {
+        $this->getLogger()->info('Received request: '.print_r($request->getContent(), true));
+
+        return json_decode($request->getContent(), true);
     }
 }
