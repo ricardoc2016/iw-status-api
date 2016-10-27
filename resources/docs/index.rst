@@ -141,6 +141,8 @@ Inside our Docker container, go to **/development** directory and execute the fo
 
 If you want to see our code coverage:
 
+.. code-block:: bash
+
     cd /development;
 
     vendor/bin/phpunit --coverage-text  --coverage-html web/coverage;
