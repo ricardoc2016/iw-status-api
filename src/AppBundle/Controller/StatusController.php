@@ -109,7 +109,7 @@ class StatusController extends Controller
 
         $statusService->delete($status);
 
-        return new JsonResponse($status->toArray(), Response::HTTP_OK);
+        return new JsonResponse(['email' => $status->getEmail()], Response::HTTP_OK);
     }
 
     /**
@@ -140,7 +140,7 @@ class StatusController extends Controller
 
         $statusService->confirm($status, $code);
 
-        return new JsonResponse($status->toArray(), Response::HTTP_OK);
+        return new JsonResponse(['email' => $status->getEmail()], Response::HTTP_OK);
     }
 
     /**

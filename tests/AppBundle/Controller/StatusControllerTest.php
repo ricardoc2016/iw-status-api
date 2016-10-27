@@ -522,9 +522,21 @@ class StatusControllerTest extends WebTestCase
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        $status = $statusService->findOneBy(['status' => 'My status']);
+        $json = json_decode($response->getContent(), true);
 
-        $this->assertNull($status);
+        $this->assertCount(1, $json);
+
+        $this->assertEquals($status->getEmail(), $json['email']);
+
+        $statusNotFound = $statusService->findOneBy(['status' => 'My status']);
+
+        $this->assertNull($statusNotFound);
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertCount(1, $json);
+
+        $this->assertEquals($status->getEmail(), $json['email']);
     }
 
     /**
