@@ -146,6 +146,15 @@ class StatusService
         )
             ->from('sta_status', 'st');
 
+        if (isset($filters['id'])) {
+            if (!$this->_simpleValidatorService->isIntegerGreaterOrEqualThan($filters['id'], 1)) {
+                throw new ApiValidationException(ErrorCodes::ERR_INVALID_QUERY);
+            }
+
+            $qb->andWhere('st.id = :id')
+                ->setParameter('id', $filters['id']);
+        }
+
         if (isset($filters['status'])) {
             if (!$this->_simpleValidatorService->isStringLessOrEqualThan($filters['status'], 120)) {
                 throw new ApiValidationException(ErrorCodes::ERR_INVALID_QUERY);
@@ -297,29 +306,30 @@ class StatusService
         $codeField = null;
         $method = null;
 
-        if ($status->getConfirmCode() === $code) {
-            $dateField = 'confirmed_at';
-            $codeField = 'confirm_code';
-            $method = 'getConfirmedAt';
+        if ($status->getDeleteConfirmCode() === $code) {
+            // Delete directly
 
-            $status->setConfirmedAt($status->createDateTimeInstance('now'));
-        } else if ($status->getDeleteConfirmCode() === $code) {
-            $dateField = 'delete_confirmed_at';
-            $codeField = 'delete_confirm_code';
-            $method = 'getDeleteConfirmedAt';
+            $status->setDeleteConfirmedAt($status->createDateTimeInstance('now'))
+                ->setDeleteConfirmCode(null);
 
-            $status->setDeleteConfirmedAt($status->createDateTimeInstance('now'));
-        } else {
+            $this->delete($status);
+
+            return;
+        }
+
+        if ($status->getConfirmCode() !== $code) {
             throw new ApiValidationException(ErrorCodes::ERR_CONFIRM_CODE_NOT_FOUND);
         }
+
+        $status->setConfirmedAt($status->createDateTimeInstance('now'));
 
         try {
             $this->beginTransaction();
 
             $sql = 'UPDATE sta_status
             SET
-                '.$dateField.' = :currentDate,
-                '.$codeField.' = :code
+                confirmed_at = :currentDate,
+                confirm_code = :code
             WHERE id = :id';
 
             $this->_db->executeUpdate(

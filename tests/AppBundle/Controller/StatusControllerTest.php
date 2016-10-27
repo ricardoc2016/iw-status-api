@@ -465,6 +465,10 @@ class StatusControllerTest extends WebTestCase
 
         $client->request('DELETE', '/status/'.$status->getId());
 
+        $response = $client->getResponse();
+
+        $this->assertEquals(200, $response->getStatusCode());
+
         $json = json_decode($response->getContent(), true);
 
         $mailCollector = $client->getProfile()->getCollector('swiftmailer');
@@ -480,6 +484,10 @@ class StatusControllerTest extends WebTestCase
         $this->assertEquals(self::$container->getParameter('mailer_from'), key($message->getFrom()));
         $this->assertEquals($status->getEmail(), key($message->getTo()));
 
+        $status = $statusService->findOneBy(['status' => 'My status']);
+
+        $this->assertNotNull($status);
+
         $url = self::$container->get('router')->generate(
             'sta_confirm_by_code',
             [
@@ -492,11 +500,31 @@ class StatusControllerTest extends WebTestCase
 
         $this->assertContains($link, $message->getBody());
 
-        // Make sure it's not deleted yet
+        // Confirm with an invalid code
+
+        $client->request('GET', '/status/'.$status->getId().'/confirmation/asdadas');
+
+        $response = $client->getResponse();
+
+        $this->assertEquals(400, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertEquals($json['code'], ErrorCodes::ERR_CONFIRM_CODE_NOT_FOUND);
+        $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_CONFIRM_CODE_NOT_FOUND));
+        $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
+
+        // Confirm with valid code...
+
+        $client->request('GET', '/status/'.$status->getId().'/confirmation/'.$status->getDeleteConfirmCode());
+
+        $response = $client->getResponse();
+
+        $this->assertEquals(200, $response->getStatusCode());
 
         $status = $statusService->findOneBy(['status' => 'My status']);
 
-        $this->assertNotNull($status);
+        $this->assertNull($status);
     }
 
     /**

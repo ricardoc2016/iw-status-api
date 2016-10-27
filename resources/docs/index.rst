@@ -6,10 +6,10 @@ Welcome to the Status API Documentation.
 Index
 -----
 
-* Requirements
-* Development
-* Installation without Docker
-* API Docs
+* `Requirements`_
+* `Development`_
+* `Installation without Docker`_
+* `API Docs`_
 
 
 Requirements
