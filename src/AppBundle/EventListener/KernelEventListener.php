@@ -11,10 +11,13 @@
 
 namespace AppBundle\EventListener;
 
+use AppBundle\Exception\ApiException;
 use AppBundle\Model\ErrorResponse;
+use AppBundle\Service\ErrorCodes;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
 use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
@@ -34,8 +37,6 @@ use Symfony\Component\HttpKernel\Event\PostResponseEvent;
  */
 class KernelEventListener
 {
-    const ERR_SYSTEM_ERROR_CODE = '99999';
-
     /**
      * Field _logger.
      *
@@ -140,13 +141,19 @@ class KernelEventListener
             [
                 'code'              => $exception->getCode() ?
                     $exception->getCode() :
-                    self::ERR_SYSTEM_ERROR_CODE,
+                    ErrorCodes::ERR_UNKNOWN,
                 'message'           => $exception->getMessage(),
                 'link'              => $this->_siteUrl.'/docs'
             ]
         );
 
-        $response = new JsonResponse($errorResponse->toArray());
+        $this->_logger->error('Returning Error Response', $errorResponse->toArray());
+
+        $httpStatus = $exception instanceof ApiException ?
+            $exception->getHttpStatusCode() :
+            Response::HTTP_INTERNAL_SERVER_ERROR;
+
+        $response = new JsonResponse($errorResponse->toArray(), $httpStatus);
 
         $event->setResponse($response);
     }

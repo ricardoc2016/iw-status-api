@@ -11,7 +11,11 @@
 
 namespace AppBundle\Service;
 
+use AppBundle\Exception\ApiValidationException;
+use AppBundle\Service\ErrorCodes;
+use AppBundle\Model\StatusCollection;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Query\QueryBuilder;
 use Psr\Log\LoggerInterface;
 
 
@@ -26,6 +30,13 @@ use Psr\Log\LoggerInterface;
  */
 class StatusService
 {
+    /**
+     * Field _simpleValidatorService
+     *
+     * @var SimpleValidatorService
+     */
+    private $_simpleValidatorService;
+
     /**
      * Field _db.
      *
@@ -44,11 +55,13 @@ class StatusService
     /**
      * StatusService constructor.
      *
-     * @param Connection      $db     - DB.
-     * @param LoggerInterface $logger - Logger.
+     * @param SimpleValidatorService $simpleValidatorService - Simple Validator Service.
+     * @param Connection             $db                     - DB.
+     * @param LoggerInterface        $logger                 - Logger.
      */
-    public function __construct(Connection $db, LoggerInterface $logger)
+    public function __construct(SimpleValidatorService $simpleValidatorService, Connection $db, LoggerInterface $logger)
     {
+        $this->_simpleValidatorService = $simpleValidatorService;
         $this->_db = $db;
         $this->_logger = $logger;
     }
@@ -59,9 +72,11 @@ class StatusService
      * @param array $filters - Filters.
      * @param array $options - Options.
      *
-     * @return array
+     * @throws ApiValidationException
+     *
+     * @return StatusCollection
      */
-    public function find(array $filters = [], array $options = [])
+    public function find(array $filters = [], array $options = []) : StatusCollection
     {
         $options = array_merge(
             [
@@ -74,17 +89,29 @@ class StatusService
             $options
         );
 
+        if (!$this->_simpleValidatorService->isIntegerGreaterOrEqualThan($options['page'], 1)) {
+            throw new ApiValidationException(ErrorCodes::ERR_INVALID_PAGE);
+        }
+
+        if (!$this->_simpleValidatorService->isIntegerGreaterOrEqualThan($options['limit'], 1)) {
+            throw new ApiValidationException(ErrorCodes::ERR_INVALID_ROWS);
+        }
+
         $qb = $this->createQueryBuilder();
 
         $qb->select(
             'st.id AS "id"',
             'st.status AS "status"',
-            'st.created_at AS "created_at"',
+            'st.created_at AS "createdAt"',
             'st.email AS "email"'
         )
             ->from('sta_status', 'st');
 
         if (isset($filters['status'])) {
+            if (!$this->_simpleValidatorService->isStringLessOrEqualThan($filters['status'], 120)) {
+                throw new ApiValidationException(ErrorCodes::ERR_INVALID_QUERY);
+            }
+
             $qb->andWhere('st.status LIKE :statusLike')
                 ->setParameter('statusLike', '%'.$filters['status'].'%');
         }
@@ -100,7 +127,9 @@ class StatusService
 
         $res = $this->_db->fetchAll($qb->getSQL(), $qb->getParameters());
 
-        return $res;
+        $statusCollection = new StatusCollection(['collection' => $res]);
+
+        return $statusCollection;
     }
 
     /**
@@ -108,8 +137,10 @@ class StatusService
      *
      * @return \Doctrine\DBAL\Query\QueryBuilder
      */
-    protected function createQueryBuilder()
+    protected function createQueryBuilder() : QueryBuilder
     {
         return $this->_db->createQueryBuilder();
     }
+
+
 }

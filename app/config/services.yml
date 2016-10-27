@@ -6,7 +6,10 @@ parameters:
 services:
     sta.service.status:
         class: AppBundle\Service\StatusService
-        arguments: ["@database_connection", "@logger"]
+        arguments: ["@sta.service.simple_validator", "@database_connection", "@logger"]
+
+    sta.service.simple_validator:
+        class: AppBundle\Service\SimpleValidatorService
 
     sta.event_listener.kernel:
         class:      AppBundle\EventListener\KernelEventListener

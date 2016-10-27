@@ -14,6 +14,14 @@ fi
 
 . "${STA_DIR}/install_params.sh";
 
+echo "Creating symlink to our documentation...";
+
+if [ -L "${STA_DIR}/web/docs" ] ; then
+    unlink "${STA_DIR}/web/docs";
+fi
+
+ln -s "${STA_DIR}/resources/docs/_build/html" "${STA_DIR}/web/docs";
+
 echo "Creating symlink on Apache htdocs dir...";
 
 if [ -L "${STA_APACHE_SYMLINK_TARGET}" ] ; then

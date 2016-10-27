@@ -1,6 +1,6 @@
 <?php
 /**
- * ApiException.php file.
+ * ApiValidationException.php file.
  *
  * @category   Frontend
  * @package    STA
@@ -11,12 +11,10 @@
 
 namespace AppBundle\Exception;
 
-use AppBundle\Service\ErrorCodes;
-use Exception;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * ApiException.php file.
+ * ApiValidationException.php file.
  *
  * @category   Frontend
  * @package    STA
@@ -24,16 +22,8 @@ use Symfony\Component\HttpFoundation\Response;
  * @author     Ricardo Canaletti <ricardo.canaletti@lacamaradelcrimen2016.com.sw>
  * @license    MIT
  */
-class ApiException extends \Exception
+class ApiValidationException extends ApiException
 {
-    /**
-     * Field _httpStatusCode.
-     *
-     * @var int
-     */
-    private $_httpStatusCode;
-
-
     /**
      * ApiException constructor.
      *
@@ -43,19 +33,6 @@ class ApiException extends \Exception
      */
     public function __construct($code, $httpStatusCode = Response::HTTP_BAD_REQUEST, \Exception $previous = null)
     {
-        parent::__construct(ErrorCodes::getMessage($code), $code, $previous);
-
-        $this->_httpStatusCode = $httpStatusCode;
-    }
-
-
-    /**
-     * Field $_httpStatusCode Getter.
-     *
-     * @return int
-     */
-    public function getHttpStatusCode()
-    {
-        return $this->_httpStatusCode;
+        parent::__construct($code, Response::HTTP_BAD_REQUEST, $previous);
     }
 }

@@ -26,7 +26,7 @@ class ErrorResponse extends AbstractModel
     /**
      * Field _code
      *
-     * @var string
+     * @var int
      */
     private $_code;
 
@@ -48,9 +48,9 @@ class ErrorResponse extends AbstractModel
     /**
      * Getter for field code.
      *
-     * @return string
+     * @return int
      */
-    public function getCode() : string
+    public function getCode() : int
     {
         return $this->_code;
     }
@@ -58,11 +58,11 @@ class ErrorResponse extends AbstractModel
     /**
      * Setter for field $code.
      *
-     * @param string $code - code.
+     * @param int $code - code.
      *
      * @return self
      */
-    public function setCode(string $code) : self
+    public function setCode(int $code) : self
     {
         $this->_code = $code;
 

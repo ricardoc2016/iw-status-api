@@ -103,6 +103,38 @@ abstract class AbstractModel
     }
 
     /**
+     * Creates a \DateTime instance.
+     *
+     * @param null|string|\DateTime $date     - Date.
+     * @param string                $format   - Format.
+     * @param string                $timezone - Timezone.
+     *
+     * @return \DateTime|null
+     */
+    protected function createDateTimeInstance(
+        $date,
+        string $format = 'Y-m-d H:i:s',
+        string $timezone = 'UTC'
+    ) {
+        if ($date === null) {
+            return null;
+        }
+
+        $timezone = new \DateTimeZone($timezone);
+
+        if (is_string($date)) {
+            $date = \DateTime::createFromFormat($format, $date, $timezone);
+        } else if (is_object($date) && $date instanceof \DateTime) {
+            /** @var \DateTime $date */
+            $date->setTimezone($timezone);
+        } else {
+            throw new \InvalidArgumentException('$date MUST be NULL, a date string or an instance of \DateTime.');
+        }
+
+        return $date;
+    }
+
+    /**
      * toArray.
      *
      * @param array $options - Options.

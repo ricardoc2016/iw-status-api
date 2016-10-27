@@ -23,6 +23,9 @@ namespace AppBundle\Model;
  */
 class Status extends AbstractModel
 {
+    const ANONYMOUS_EMAIL           = 'anonymous';
+
+
     /**
      * Field _id
      *
@@ -50,6 +53,13 @@ class Status extends AbstractModel
      * @var \DateTime
      */
     private $_createdAt;
+
+    /**
+     * Field _confirmedAt
+     *
+     * @var \DateTime
+     */
+    private $_confirmedAt;
 
 
 
@@ -144,7 +154,31 @@ class Status extends AbstractModel
      */
     public function setCreatedAt($createdAt) : self
     {
-        $this->_createdAt = $createdAt;
+        $this->_createdAt = $this->createDateTimeInstance($createdAt);
+
+        return $this;
+    }
+
+    /**
+     * Getter for field confirmedAt.
+     *
+     * @return \DateTime|null
+     */
+    public function getConfirmedAt()
+    {
+        return $this->_confirmedAt;
+    }
+
+    /**
+     * Setter for field $confirmedAt.
+     *
+     * @param \DateTime|string $confirmedAt - confirmedAt.
+     *
+     * @return self
+     */
+    public function setConfirmedAt($confirmedAt) : self
+    {
+        $this->_confirmedAt = $this->createDateTimeInstance($confirmedAt);
 
         return $this;
     }
@@ -162,7 +196,7 @@ class Status extends AbstractModel
             'id'                => $this->getId(),
             'email'             => $this->getEmail(),
             'status'            => $this->getStatus(),
-            'createdAt'         => $this->getCreatedAt()->format('Y-m-d H:i:s')
+            'created_at'        => $this->getCreatedAt()->format('Y-m-d\TH:i:s\Z')
         ];
     }
 }
