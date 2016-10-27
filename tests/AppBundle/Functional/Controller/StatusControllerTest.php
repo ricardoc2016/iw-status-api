@@ -258,7 +258,7 @@ class StatusControllerTest extends AbstractTestCase
         $this->assertEquals($status->getCreatedAt()->format('Y-m-d\TH:i:s\Z'), $json['created_at']);
     }
 
-    public function testPost()
+    public function testInvalidRequest()
     {
         $client = static::createClient();
 
@@ -276,6 +276,11 @@ class StatusControllerTest extends AbstractTestCase
         $this->assertEquals($json['code'], ErrorCodes::ERR_INVALID_JSON);
         $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_INVALID_JSON));
         $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
+    }
+
+    public function testPost()
+    {
+        $client = static::createClient();
 
         // Now, OK responses
 

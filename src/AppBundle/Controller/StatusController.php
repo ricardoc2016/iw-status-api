@@ -209,5 +209,7 @@ class StatusController extends Controller
         if (!is_array($result)) {
             throw new ApiException(ErrorCodes::ERR_INVALID_JSON, Response::HTTP_BAD_REQUEST);
         }
+
+        return $result;
     }
 }
