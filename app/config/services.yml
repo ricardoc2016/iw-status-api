@@ -6,7 +6,7 @@ parameters:
 services:
     sta.service.status:
         class: AppBundle\Service\StatusService
-        arguments: ["@sta.service.simple_validator", "@database_connection", "@logger"]
+        arguments: ["@mailer", "@sta.service.simple_validator", "@database_connection", "@logger", "@router", "%mailer_from%"]
 
     sta.service.simple_validator:
         class: AppBundle\Service\SimpleValidatorService

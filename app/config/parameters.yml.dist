@@ -18,4 +18,6 @@ parameters:
     # A secret key that's used to generate certain security-related tokens
     secret:            ThisTokenIsNotSoSecretChangeIt
 
-    site_url: http://localhost:37080/sta
+    site_url:          http://localhost:37080/sta
+
+    mailer_from:       your_email@your_host.com

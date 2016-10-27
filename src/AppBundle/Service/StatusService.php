@@ -18,6 +18,7 @@ use AppBundle\Model\StatusCollection;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Routing\RouterInterface;
 
 
 /**
@@ -52,19 +53,52 @@ class StatusService
      */
     private $_logger;
 
+    /**
+     * Field _mailer
+     *
+     * @var \Swift_Mailer
+     */
+    private $_mailer;
+
+    /**
+     * Field _router
+     *
+     * @var RouterInterface
+     */
+    private $_router;
+
+    /**
+     * Field _mailerFrom
+     *
+     * @var string
+     */
+    private $_mailerFrom;
+
 
     /**
      * StatusService constructor.
      *
+     * @param \Swift_Mailer          $mailer                 - Mailer.
      * @param SimpleValidatorService $simpleValidatorService - Simple Validator Service.
      * @param Connection             $db                     - DB.
      * @param LoggerInterface        $logger                 - Logger.
+     * @param RouterInterface        $router                 - Router.
+     * @param string                 $mailerFrom             - Mailer From.
      */
-    public function __construct(SimpleValidatorService $simpleValidatorService, Connection $db, LoggerInterface $logger)
-    {
+    public function __construct(
+        \Swift_Mailer $mailer,
+        SimpleValidatorService $simpleValidatorService,
+        Connection $db,
+        LoggerInterface $logger,
+        RouterInterface $router,
+        string $mailerFrom
+    ) {
+        $this->_mailer = $mailer;
         $this->_simpleValidatorService = $simpleValidatorService;
         $this->_db = $db;
         $this->_logger = $logger;
+        $this->_router = $router;
+        $this->_mailerFrom = $mailerFrom;
     }
 
     /**
@@ -104,7 +138,11 @@ class StatusService
             'st.id AS "id"',
             'st.status AS "status"',
             'st.created_at AS "createdAt"',
-            'st.email AS "email"'
+            'st.email AS "email"',
+            'st.confirm_code AS "confirmCode"',
+            'st.confirmed_at AS "confirmedAt"',
+            'st.delete_confirm_code AS "deleteConfirmCode"',
+            'st.delete_confirmed_at AS "deleteConfirmedAt"'
         )
             ->from('sta_status', 'st');
 
@@ -194,7 +232,7 @@ class StatusService
         if (!$status->isAnonymous()) {
             // VERY simple confirmation code...
 
-            $status->setConfirmCode(sha1(uniqid('confirm-code', true).microtime(true).rand(1000, 9999)));
+            $status->setConfirmCode($this->generateConfirmCode('confirm-code'));
         } else {
             $status->setConfirmedAt($status->createDateTimeInstance('now'));
         }
@@ -228,7 +266,9 @@ class StatusService
 
             $status->setId($this->_db->lastInsertId());
 
-            $this->sendEmail($status);
+            if (!$status->isAnonymous()) {
+                $this->sendConfirmationEmail($status);
+            }
 
             $this->commit();
 
@@ -241,15 +281,199 @@ class StatusService
     }
 
     /**
-     * Sends a confirmation email.
+     * Confirms a removal or a status message.
+     *
+     * @param Status $status - Status.
+     * @param string $code   - Code.
+     *
+     * @throws ApiValidationException
+     * @throws \Exception
+     *
+     * @return void
+     */
+    public function confirm(Status $status, string $code)
+    {
+        $dateField = null;
+        $codeField = null;
+        $method = null;
+
+        if ($status->getConfirmCode() === $code) {
+            $dateField = 'confirmed_at';
+            $codeField = 'confirm_code';
+            $method = 'getConfirmedAt';
+
+            $status->setConfirmedAt($status->createDateTimeInstance('now'));
+        } else if ($status->getDeleteConfirmCode() === $code) {
+            $dateField = 'delete_confirmed_at';
+            $codeField = 'delete_confirm_code';
+            $method = 'getDeleteConfirmedAt';
+
+            $status->setDeleteConfirmedAt($status->createDateTimeInstance('now'));
+        } else {
+            throw new ApiValidationException(ErrorCodes::ERR_CONFIRM_CODE_NOT_FOUND);
+        }
+
+        try {
+            $this->beginTransaction();
+
+            $sql = 'UPDATE sta_status
+            SET
+                '.$dateField.' = :currentDate,
+                '.$codeField.' = :code
+            WHERE id = :id';
+
+            $this->_db->executeUpdate(
+                $sql,
+                [
+                    'id'            => $status->getId(),
+                    'currentDate'   => $status->$method()->format('Y-m-d H:i:s'),
+                    'code'          => null
+                ]
+            );
+
+            $this->commit();
+        } catch (\Exception $e) {
+            $this->rollback();
+
+            throw $e;
+        }
+    }
+
+    /**
+     * delete.
+     *
+     * @param Status $status - Status.
+     *
+     * @throws \Exception
+     *
+     * @return void
+     */
+    public function delete(Status $status)
+    {
+        if ($status->isAnonymous()) {
+            throw new ApiValidationException(ErrorCodes::ERR_DELETE_ANONYMOUS);
+        }
+
+        try {
+            $this->beginTransaction();
+
+            if ($status->isDeleteConfirmed()) {
+                // Do remove it
+
+                $this->_db->executeUpdate(
+                    'DELETE FROM sta_status WHERE id = :id',
+                    ['id' => $status->getId()]
+                );
+            } else {
+                $status->setDeleteConfirmCode($this->generateConfirmCode('delete-confirm-code'));
+
+                $this->_db->executeUpdate(
+                    'UPDATE sta_status SET delete_confirm_code = :code WHERE id = :id',
+                    [
+                        'id'                => $status->getId(),
+                        'code'              => $status->getDeleteConfirmCode()
+                    ]
+                );
+
+                $this->sendDeleteConfirmationEmail($status);
+            }
+
+            $this->commit();
+        } catch (\Exception $e) {
+            $this->rollback();
+
+            throw $e;
+        }
+    }
+
+    /**
+     * sendDeleteConfirmationEmail.
      *
      * @param Status $status - Status.
      *
      * @return void
      */
-    protected function sendEmail(Status $status)
+    protected function sendDeleteConfirmationEmail(Status $status)
     {
+        $link = $this->_router->generate(
+            'sta_confirm_by_code',
+            [
+                'id'        => $status->getId(),
+                'code'      => $status->getDeleteConfirmCode()
+            ],
+            RouterInterface::ABSOLUTE_PATH
+        );
+        $id = $status->getId();
 
+        $html = <<<HTML
+Hi,
+
+You need to confirm the removal of Status message ID {$id}. Please, click in the following link:
+
+- <a href="{$link}">Confirm!</a>
+
+Thanks.
+HTML;
+
+
+        $this->sendEmail($status->getEmail(), 'Removal Confirmation E-Mail', $html);
+    }
+
+    /**
+     * sendConfirmationEmail.
+     *
+     * @param Status $status - Status.
+     *
+     * @return void
+     */
+    protected function sendConfirmationEmail(Status $status)
+    {
+        $link = $this->_router->generate(
+            'sta_confirm_by_code',
+            [
+                'id'        => $status->getId(),
+                'code'      => $status->getConfirmCode()
+            ],
+            RouterInterface::ABSOLUTE_PATH
+        );
+
+        $html = <<<HTML
+Hi,
+
+You need to confirm your E-Mail. Please, click in the following link:
+
+- <a href="{$link}">Confirm!</a>
+
+Thanks.
+HTML;
+
+
+        $this->sendEmail($status->getEmail(), 'Status Message Confirmation E-Mail', $html);
+    }
+
+    /**
+     * Sends a confirmation email.
+     *
+     * @param string $email   - E-Mail.
+     * @param string $subject - Subject.
+     * @param string $body    - Body.
+     *
+     * @return void
+     */
+    protected function sendEmail($email, $subject, $body)
+    {
+        $message = \Swift_Message::newInstance()
+            ->setSubject($subject)
+            ->setFrom($this->_mailerFrom)
+            ->setTo($email)
+            ->setBody($body)
+        ;
+
+        $res = $this->_mailer->send($message);
+
+        if (!$res) {
+            throw new \RuntimeException('Could NOT send an e-mail to "'.$email.'".');
+        }
     }
 
     /**
@@ -312,5 +536,15 @@ class StatusService
     protected function isTransactionActive() : bool
     {
         return $this->_db->isTransactionActive();
+    }
+
+    /**
+     * generateConfirmCode.
+     *
+     * @return string
+     */
+    protected function generateConfirmCode($prefix) : string
+    {
+        return sha1(uniqid($prefix, true).microtime(true).rand(1000, 9999));
     }
 }

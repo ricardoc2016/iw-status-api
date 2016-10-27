@@ -92,7 +92,9 @@ class InstallCommand extends Command implements ContainerAwareInterface
                     status TEXT NOT NULL,
                     created_at DATE NOT NULL,
                     confirmed_at DATE,
-                    confirm_code TEXT
+                    confirm_code TEXT,
+                    delete_confirmed_at DATE,
+                    delete_confirm_code TEXT
                 )'
             );
 

@@ -57,16 +57,30 @@ class Status extends AbstractModel
     /**
      * Field _confirmedAt
      *
-     * @var \DateTime
+     * @var \DateTime|null
      */
     private $_confirmedAt;
 
     /**
      * Field _confirmCode
      *
-     * @var string
+     * @var string|null
      */
     private $_confirmCode;
+
+    /**
+     * Field _deleteConfirmedAt
+     *
+     * @var \DateTime|null
+     */
+    private $_deleteConfirmedAt;
+
+    /**
+     * Field _deleteConfirmCode
+     *
+     * @var string|null
+     */
+    private $_deleteConfirmCode;
 
 
     /**
@@ -206,11 +220,69 @@ class Status extends AbstractModel
      *
      * @return self
      */
-    public function setConfirmCode(string $confirmCode) : self
+    public function setConfirmCode($confirmCode) : self
     {
         $this->_confirmCode = $confirmCode;
 
         return $this;
+    }
+
+    /**
+     * Getter for field deleteConfirmedAt.
+     *
+     * @return \DateTime|null
+     */
+    public function getDeleteConfirmedAt()
+    {
+        return $this->_deleteConfirmedAt;
+    }
+
+    /**
+     * Setter for field $deleteConfirmedAt.
+     *
+     * @param \DateTime|null $deleteConfirmedAt - deleteConfirmedAt.
+     *
+     * @return $this
+     */
+    public function setDeleteConfirmedAt($deleteConfirmedAt)
+    {
+        $this->_deleteConfirmedAt = $this->createDateTimeInstance($deleteConfirmedAt);
+
+        return $this;
+    }
+
+    /**
+     * Getter for field deleteConfirmCode.
+     *
+     * @return null|string
+     */
+    public function getDeleteConfirmCode()
+    {
+        return $this->_deleteConfirmCode;
+    }
+
+    /**
+     * Setter for field $deleteConfirmCode.
+     *
+     * @param null|string $deleteConfirmCode - deleteConfirmCode.
+     *
+     * @return $this
+     */
+    public function setDeleteConfirmCode($deleteConfirmCode)
+    {
+        $this->_deleteConfirmCode = $deleteConfirmCode;
+
+        return $this;
+    }
+
+    /**
+     * isDeleteConfirmed.
+     *
+     * @return bool
+     */
+    public function isDeleteConfirmed() : bool
+    {
+        return $this->getDeleteConfirmedAt() !== null;
     }
 
     /**

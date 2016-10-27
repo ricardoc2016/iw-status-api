@@ -80,8 +80,65 @@ class StatusController extends Controller
         $status = $statusService->findOneBy(['id' => $id]);
 
         if (!$status) {
-            throw new ApiException(ErrorCodes::ERR_GET_BY_ID_NOT_FOUND, Response::HTTP_NOT_FOUND);
+            throw new ApiException(ErrorCodes::ERR_STATUS_NOT_FOUND, Response::HTTP_NOT_FOUND);
         }
+
+        return new JsonResponse($status->toArray(), Response::HTTP_OK);
+    }
+
+    /**
+     * Delete by ID action.
+     *
+     * @param Request $request - Request.
+     *
+     * @Route("/status/{id}", name="sta_delete_by_id", methods={"DELETE"}, requirements={"id" = "\d+"})
+     *
+     * @throws ApiException
+     *
+     * @return JsonResponse
+     */
+    public function deleteByIdAction(Request $request, $id) : JsonResponse
+    {
+        $statusService = $this->getStatusService();
+
+        $status = $statusService->findOneBy(['id' => $id]);
+
+        if (!$status) {
+            throw new ApiException(ErrorCodes::ERR_STATUS_NOT_FOUND, Response::HTTP_NOT_FOUND);
+        }
+
+        $statusService->delete($status);
+
+        return new JsonResponse($status->toArray(), Response::HTTP_OK);
+    }
+
+    /**
+     * Delete by ID action.
+     *
+     * @param Request $request - Request.
+     *
+     * @Route(
+     *     "/status/{id}/confirmation/{code}",
+     *     name="sta_confirm_by_code",
+     *     methods={"GET"},
+     *     requirements={"id" = "\d+", "code" = "[a-zA-Z0-9\-]+"}
+     * )
+     *
+     * @throws ApiException
+     *
+     * @return JsonResponse
+     */
+    public function confirmByCodeAction(Request $request, $id, $code) : JsonResponse
+    {
+        $statusService = $this->getStatusService();
+
+        $status = $statusService->findOneBy(['id' => $id]);
+
+        if (!$status) {
+            throw new ApiException(ErrorCodes::ERR_STATUS_NOT_FOUND, Response::HTTP_NOT_FOUND);
+        }
+
+        $statusService->confirm($status, $code);
 
         return new JsonResponse($status->toArray(), Response::HTTP_OK);
     }

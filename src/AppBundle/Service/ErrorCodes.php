@@ -32,8 +32,11 @@ class ErrorCodes
     const ERR_POST_MISSING_STATUS           = 2002;
     const ERR_POST_INVALID_STATUS           = 2003;
 
-    const ERR_GET_BY_ID_NOT_FOUND           = 3000;
+    const ERR_CONFIRM_CODE_NOT_FOUND        = 3000;
 
+    const ERR_DELETE_ANONYMOUS              = 4000;
+
+    const ERR_STATUS_NOT_FOUND              = 9997;
     const ERR_RESOURCE_NOT_FOUND            = 9998;
     const ERR_UNKNOWN                       = 9999;
 
@@ -44,19 +47,22 @@ class ErrorCodes
      * @var array
      */
     public static $messages = [
-        self::ERR_INVALID_PAGE          => 'Parameter "p" MUST be an integer >= 1',
-        self::ERR_INVALID_ROWS          => 'Parameter "r" MUST be an integer >= 1',
-        self::ERR_INVALID_QUERY         => 'Parameter "q" MUST be a string with a maximum of 120 characters.',
+        self::ERR_INVALID_PAGE                  => 'Parameter "p" MUST be an integer >= 1',
+        self::ERR_INVALID_ROWS                  => 'Parameter "r" MUST be an integer >= 1',
+        self::ERR_INVALID_QUERY                 => 'Parameter "q" MUST be a string with a maximum of 120 characters.',
 
-        self::ERR_POST_MISSING_EMAIL    => 'Missing "email" parameter.',
-        self::ERR_POST_INVALID_EMAIL    => 'Parameter "email" MUST be a valid e-mail.',
-        self::ERR_POST_MISSING_STATUS   => 'Missing parameter "status".',
-        self::ERR_POST_INVALID_STATUS   => 'Parameter "string" MUST be a string with a maximum of 120 characters.',
+        self::ERR_POST_MISSING_EMAIL            => 'Missing "email" parameter.',
+        self::ERR_POST_INVALID_EMAIL            => 'Parameter "email" MUST be a valid e-mail.',
+        self::ERR_POST_MISSING_STATUS           => 'Missing parameter "status".',
+        self::ERR_POST_INVALID_STATUS           => 'Parameter "string" MUST be a string with a maximum of 120 characters.',
 
-        self::ERR_GET_BY_ID_NOT_FOUND   => 'Status message not found.',
+        self::ERR_CONFIRM_CODE_NOT_FOUND        => 'This status message does not have the confirmation code received.',
 
-        self::ERR_RESOURCE_NOT_FOUND    => 'Resource not found.',
-        self::ERR_UNKNOWN               => 'Unknown Error.'
+        self::ERR_DELETE_ANONYMOUS              => 'Can\'t delete an anonymous status.',
+
+        self::ERR_STATUS_NOT_FOUND              => 'Status message not found.',
+        self::ERR_RESOURCE_NOT_FOUND            => 'Resource not found.',
+        self::ERR_UNKNOWN                       => 'Unknown Error.'
     ];
 
     /**

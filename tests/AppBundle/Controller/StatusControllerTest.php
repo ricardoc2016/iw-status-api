@@ -21,6 +21,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\BrowserKit\Client;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\RouterInterface;
 
 /**
  * InstallCommand.php file.
@@ -87,6 +88,8 @@ class StatusControllerTest extends WebTestCase
     public function tearDown()
     {
         parent::tearDown();
+
+        $this->cleanUp();
     }
 
     /**
@@ -299,8 +302,8 @@ class StatusControllerTest extends WebTestCase
 
         $this->assertCount(3, $json);
 
-        $this->assertEquals($json['code'], ErrorCodes::ERR_GET_BY_ID_NOT_FOUND);
-        $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_GET_BY_ID_NOT_FOUND));
+        $this->assertEquals($json['code'], ErrorCodes::ERR_STATUS_NOT_FOUND);
+        $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_STATUS_NOT_FOUND));
         $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
 
         $this->beginTransaction();
@@ -338,7 +341,13 @@ class StatusControllerTest extends WebTestCase
             'status'            => 'My Status!'
         ];
 
+        $client->enableProfiler();
+
         $this->postStatus($client, $data);
+
+        $mailCollector = $client->getProfile()->getCollector('swiftmailer');
+
+        $this->assertEquals(0, $mailCollector->getMessageCount());
 
         $response = $client->getResponse();
 
@@ -353,6 +362,141 @@ class StatusControllerTest extends WebTestCase
         $date = new \DateTime($json['created_at']);
 
         $this->assertEquals($json['created_at'], $date->format('Y-m-d\TH:i:s\Z'));
+
+        // Send a non-anonymous status
+
+        $data = [
+            'email'             => 'a@a.com',
+            'status'            => 'My Status 2!'
+        ];
+
+        $client->enableProfiler();
+
+        $this->postStatus($client, $data);
+
+        $status = $this->getStatusService()->findOneBy(['status' => 'My Status 2!']);
+
+        $mailCollector = $client->getProfile()->getCollector('swiftmailer');
+
+        $this->assertEquals(1, $mailCollector->getMessageCount());
+
+        $collectedMessages = $mailCollector->getMessages();
+        $message = $collectedMessages[0];
+
+        // Asserting email data
+        $this->assertInstanceOf('Swift_Message', $message);
+        $this->assertEquals('Status Message Confirmation E-Mail', $message->getSubject());
+        $this->assertEquals(self::$container->getParameter('mailer_from'), key($message->getFrom()));
+        $this->assertEquals($status->getEmail(), key($message->getTo()));
+
+        $url = self::$container->get('router')->generate(
+            'sta_confirm_by_code',
+            [
+                'id'        => $status->getId(),
+                'code'      => $status->getConfirmCode()
+            ],
+            RouterInterface::ABSOLUTE_PATH
+        );
+        $link = '<a href="'.$url.'">';
+
+        $this->assertContains($link, $message->getBody());
+
+        $response = $client->getResponse();
+
+        $this->assertEquals(201, $response->getStatusCode());
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertCount(4, $json);
+        $this->assertInternalType('int', $json['id']);
+        $this->assertEquals($data['email'], $json['email']);
+        $this->assertEquals($data['status'], $json['status']);
+
+        $date = new \DateTime($json['created_at']);
+
+        $this->assertEquals($json['created_at'], $date->format('Y-m-d\TH:i:s\Z'));
+    }
+
+    public function testDelete()
+    {
+        $client = static::createClient();
+
+        $client->request('DELETE', '/status/2312312');
+
+        $response = $client->getResponse();
+
+        $this->assertEquals(404, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertEquals($json['code'], ErrorCodes::ERR_STATUS_NOT_FOUND);
+        $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_STATUS_NOT_FOUND));
+        $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
+
+        $this->beginTransaction();
+
+        $this->createStatus('a@a.com', 'My status', '2015-01-01 00:00:00')
+            ->createStatus('b@b.com', 'My other status', '2015-01-01 01:00:00')
+            ->createStatus(Status::ANONYMOUS_EMAIL, 'My oooother status', '2015-01-01 02:00:00');
+
+        $this->commit();
+
+        $statusService = $this->getStatusService();
+
+        $status = $statusService->findOneBy(['status' => 'My status']);
+        $anonymStatus = $statusService->findOneBy(['status' => 'My oooother status']);
+
+        // Anonymous status CAN'T be deleted
+
+        $client->request('DELETE', '/status/'.$anonymStatus->getId());
+
+        $response = $client->getResponse();
+
+        $this->assertEquals(400, $response->getStatusCode());
+
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertEquals($json['code'], ErrorCodes::ERR_DELETE_ANONYMOUS);
+        $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_DELETE_ANONYMOUS));
+        $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
+
+        // Test deleting a status
+
+        $client->enableProfiler();
+
+        $client->request('DELETE', '/status/'.$status->getId());
+
+        $json = json_decode($response->getContent(), true);
+
+        $mailCollector = $client->getProfile()->getCollector('swiftmailer');
+
+        $this->assertEquals(1, $mailCollector->getMessageCount());
+
+        $collectedMessages = $mailCollector->getMessages();
+        $message = $collectedMessages[0];
+
+        // Asserting email data
+        $this->assertInstanceOf('Swift_Message', $message);
+        $this->assertEquals('Removal Confirmation E-Mail', $message->getSubject());
+        $this->assertEquals(self::$container->getParameter('mailer_from'), key($message->getFrom()));
+        $this->assertEquals($status->getEmail(), key($message->getTo()));
+
+        $url = self::$container->get('router')->generate(
+            'sta_confirm_by_code',
+            [
+                'id'        => $status->getId(),
+                'code'      => $status->getDeleteConfirmCode()
+            ],
+            RouterInterface::ABSOLUTE_PATH
+        );
+        $link = '<a href="'.$url.'">';
+
+        $this->assertContains($link, $message->getBody());
+
+        // Make sure it's not deleted yet
+
+        $status = $statusService->findOneBy(['status' => 'My status']);
+
+        $this->assertNotNull($status);
     }
 
     /**
