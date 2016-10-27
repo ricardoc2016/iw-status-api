@@ -262,6 +262,23 @@ class StatusControllerTest extends AbstractTestCase
     {
         $client = static::createClient();
 
+        // Test invalid json request
+
+        $client->request('POST', '/status', [], [], ['Content-Type' => 'application/json'], '{asdasdasda');
+
+        $response = $client->getResponse();
+
+        $this->assertEquals(400, $response->getStatusCode());
+        $json = json_decode($response->getContent(), true);
+
+        $this->assertCount(3, $json);
+
+        $this->assertEquals($json['code'], ErrorCodes::ERR_INVALID_JSON);
+        $this->assertEquals($json['message'], ErrorCodes::getMessage(ErrorCodes::ERR_INVALID_JSON));
+        $this->assertEquals($json['link'], self::$container->getParameter('site_url').'/docs');
+
+        // Now, OK responses
+
         $data = [
             'email'             => Status::ANONYMOUS_EMAIL,
             'status'            => 'My Status!'

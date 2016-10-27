@@ -52,6 +52,12 @@ Documentation is available at:
 
     http://localhost:37080/sta/docs/index.html
 
+To access the Docker container, execute the following command:
+
+.. code-block:: bash
+
+    docker exec -ti iw_status_api_php bash;
+
 
 Installation without Docker
 ---------------------------
@@ -122,6 +128,7 @@ CODE                       DESCRIPTION
 
 4000                       Can't delete an anonymous status.
 
+9996                       Invalid JSON request.
 9997                       Status message not found.
 9998                       Resource not found.
 9999                       Unknown Error.

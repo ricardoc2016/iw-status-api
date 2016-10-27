@@ -196,12 +196,18 @@ class StatusController extends Controller
      *
      * @param Request $request - Request.
      *
-     * @return array|null
+     * @throws ApiException
+     *
+     * @return array
      */
     protected function getJsonRequest(Request $request)
     {
         $this->getLogger()->info('Received request: '.print_r($request->getContent(), true));
 
-        return json_decode($request->getContent(), true);
+        $result = @json_decode($request->getContent(), true);
+
+        if (!is_array($result)) {
+            throw new ApiException(ErrorCodes::ERR_INVALID_JSON, Response::HTTP_BAD_REQUEST);
+        }
     }
 }

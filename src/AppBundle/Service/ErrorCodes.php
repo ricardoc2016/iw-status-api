@@ -37,6 +37,7 @@ class ErrorCodes
 
     const ERR_DELETE_ANONYMOUS              = 4000;
 
+    const ERR_INVALID_JSON                  = 9996;
     const ERR_STATUS_NOT_FOUND              = 9997;
     const ERR_RESOURCE_NOT_FOUND            = 9998;
     const ERR_UNKNOWN                       = 9999;
@@ -62,6 +63,7 @@ class ErrorCodes
 
         self::ERR_DELETE_ANONYMOUS              => 'Can\'t delete an anonymous status.',
 
+        self::ERR_INVALID_JSON                  => 'Invalid JSON request.',
         self::ERR_STATUS_NOT_FOUND              => 'Status message not found.',
         self::ERR_RESOURCE_NOT_FOUND            => 'Resource not found.',
         self::ERR_UNKNOWN                       => 'Unknown Error.'

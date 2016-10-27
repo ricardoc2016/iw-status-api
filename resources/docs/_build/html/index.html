@@ -181,6 +181,10 @@
 <p>Documentation is available at:</p>
 <blockquote>
 <div><a class="reference external" href="http://localhost:37080/sta/docs/index.html">http://localhost:37080/sta/docs/index.html</a></div></blockquote>
+<p>To access the Docker container, execute the following command:</p>
+<div class="highlight-bash"><div class="highlight"><pre>docker <span class="nb">exec</span> -ti iw_status_api_php bash<span class="p">;</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="installation-without-docker">
 <h2>Installation without Docker<a class="headerlink" href="#installation-without-docker" title="Enlazar permanentemente con este título">¶</a></h2>
@@ -303,13 +307,16 @@ install this application.</td>
 <tr class="row-odd"><td>4000</td>
 <td>Can&#8217;t delete an anonymous status.</td>
 </tr>
-<tr class="row-even"><td>9997</td>
+<tr class="row-even"><td>9996</td>
+<td>Invalid JSON request.</td>
+</tr>
+<tr class="row-odd"><td>9997</td>
 <td>Status message not found.</td>
 </tr>
-<tr class="row-odd"><td>9998</td>
+<tr class="row-even"><td>9998</td>
 <td>Resource not found.</td>
 </tr>
-<tr class="row-even"><td>9999</td>
+<tr class="row-odd"><td>9999</td>
 <td>Unknown Error.</td>
 </tr>
 </tbody>
